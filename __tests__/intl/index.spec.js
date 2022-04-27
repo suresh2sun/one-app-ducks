@@ -295,6 +295,37 @@ describe('intl duck', () => {
       expect(reducer(state, failureAction)).toMatchSnapshot();
     });
 
+    it('should delete the error data on successful language request action after unsuccessful on server', () => {
+      global.BROWSER = false;
+      let state = fromJS({ activeLocale: 'locale' });
+      const successAction = {
+        type: LANGUAGE_PACK_SUCCESS,
+        locale: 'locale',
+        componentKey: 'foo',
+        data: { data: 'data' },
+      };
+      const failureAction = {
+        type: LANGUAGE_PACK_FAILURE,
+        locale: 'locale',
+        componentKey: 'foo',
+        error: new Error('error'),
+      };
+      state = reducer(state, failureAction);
+      global.BROWSER = true;
+      expect(reducer(state, successAction).toJS()).toEqual({
+        activeLocale: 'locale',
+        languagePacks: {
+          locale: {
+            foo: {
+              _loadedOnServer: false,
+              isLoading: false,
+              data: { data: 'data' },
+            },
+          },
+        },
+      });
+    });
+
     describe('update locale with mock data', () => {
       it('should update the state with mocked data', () => {
         const oldState = fromJS({ activeLocale: 'oldLocale' });
